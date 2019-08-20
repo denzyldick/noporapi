@@ -24,7 +24,7 @@ func main() {
 	})
 
 	fmt.Println("- [OK] Ready to accept connections.")
-	err := http.ListenAndServe("localhost:"+config.ServePort, nil)
+	err := http.ListenAndServe(":"+config.ServePort, nil)
 	if err != nil {
 		fmt.Println(" - [x] Couldn't start server.")
 		log.Fatal(err)
