@@ -11,16 +11,20 @@ import (
 func main() {
 
 	flag.Parse()
-	fmt.Println("- [OK] Starting server localhost:4040")
-	fmt.Println("- [OK] Address: http://localhost:4040")
-	/// @todo prevent main thread to stop before children.
+
+	config := Config{}
+	config.New()
+	fmt.Println("- [OK] Starting server on port:", config.ServePort)
+	fmt.Println("- [OK] Address: http://localhost:", config.ServePort)
+
 	http.HandleFunc("/place", func(w http.ResponseWriter, r *http.Request) {
 		enableCors(&w)
 		fmt.Println("- [OK] New request", r.Host)
 		dispatcher(w, r)
 	})
 
-	err := http.ListenAndServe("localhost:4040", nil)
+	fmt.Println("- [OK] Ready to accept connections.")
+	err := http.ListenAndServe("localhost:"+config.ServePort, nil)
 	if err != nil {
 		fmt.Println(" - [x] Couldn't start server.")
 		log.Fatal(err)
@@ -53,8 +57,10 @@ func dispatcher(w http.ResponseWriter, r *http.Request) {
 		}
 		saveErr := p.Save()
 		if saveErr != nil {
+			log.Println(saveErr)
 			w.WriteHeader(500)
 		} else {
+			fmt.Println(" - [OK] Place has been stored")
 			w.WriteHeader(200)
 		}
 	}
@@ -102,6 +108,7 @@ type Place struct {
 	ImgUrl string `json:"img_url"`
 	State  string `json:"state"`
 	Geo    Geo    `json:"geo"`
+	Active bool
 }
 
 func (p *Place) Done() {
@@ -117,6 +124,9 @@ func (p *Place) Informed() {
 }
 
 func (p *Place) Save() error {
+	p.State = StateFresh
+	p.Active = true
+	///p.Good = 0
 	c := Connect()
 	return c.Insert(p)
 }
